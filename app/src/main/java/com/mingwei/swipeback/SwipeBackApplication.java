@@ -7,15 +7,16 @@ import android.app.Application;
  */
 public class SwipeBackApplication extends Application {
 
-    private SwipeBackHelper mBackHelper;
+    private ActivityBackStack mBackStack;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mBackHelper = new SwipeBackHelper();
+        mBackStack = new ActivityBackStack();
+        registerActivityLifecycleCallbacks(mBackStack);
     }
 
-    public SwipeBackHelper getBackHelper() {
-        return mBackHelper;
+    public ActivityBackStack getBackHelper() {
+        return mBackStack;
     }
 }
