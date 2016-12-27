@@ -14,8 +14,6 @@ public class SimpleActivity extends BaseActivity {
 
     private TextView mText1;
 
-    private Button mBtn2;
-
     private Button mBtn3;
 
     @Override
@@ -23,18 +21,10 @@ public class SimpleActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.simple_layout);
         mText1 = (TextView) findViewById(R.id.text1);
-        mBtn2 = (Button) findViewById(R.id.btn2);
         mBtn3 = (Button) findViewById(R.id.btn3);
 
         mText1.setText("ActivityStack_size=" +
                 ((SwipeBackApplication) getApplication()).getBackHelper().getSize());
-
-        mBtn2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getHelper().addPreviousView();
-            }
-        });
 
         mBtn3.setOnClickListener(new View.OnClickListener() {
             @Override
