@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -92,6 +93,14 @@ public class SwipeBackHelper {
         previousContainer.addView(view);
         mPreviousContentView = null;
         mPreviousActivity = null;
+    }
+
+    public void drawPreviousView() {
+        FrameLayout currentContentView = mCurrentContentView;
+        View previousContentView = mPreviousContentView;
+        DrawView drawView = new DrawView(getContext());
+        currentContentView.addView(drawView, 0);
+        drawView.setView(previousContentView);
     }
 
     /**
@@ -240,6 +249,7 @@ public class SwipeBackHelper {
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
                 if (args) {
+                    drawPreviousView();
                     removePreviousView();
                     if (getContext() instanceof Activity) {
                         Activity activity = (Activity) getContext();
@@ -259,5 +269,28 @@ public class SwipeBackHelper {
             }
         });
         valueAnimator.start();
+    }
+
+    class DrawView extends View {
+
+        private View mView;
+
+        public DrawView(Context context) {
+            super(context);
+        }
+
+        public void setView(View view) {
+            mView = view;
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            if (mView != null) {
+                mView.draw(canvas);
+                mView = null;
+            }
+        }
     }
 }

@@ -22,12 +22,6 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        //mBackHelper.removePreviousView();
-        super.onStop();
-    }
-
-    @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         return mBackHelper.dispatchTouchEvent(ev) || super.dispatchTouchEvent(ev);
     }
