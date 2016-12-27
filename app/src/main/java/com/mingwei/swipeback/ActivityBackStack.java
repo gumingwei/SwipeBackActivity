@@ -75,4 +75,8 @@ public class ActivityBackStack implements Application.ActivityLifecycleCallbacks
         }
         return mActivityStack.get(size - 2);
     }
+
+    public int getSize() {
+        return mActivityStack.size();
+    }
 }

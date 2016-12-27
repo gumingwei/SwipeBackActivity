@@ -5,14 +5,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
+import android.widget.TextView;
 
 /**
  * Created by mingwei on 12/23/16.
  */
 public class SimpleActivity extends BaseActivity {
 
-    private Button mBtn1;
+    private TextView mText1;
 
     private Button mBtn2;
 
@@ -22,17 +22,12 @@ public class SimpleActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.simple_layout);
-        mBtn1 = (Button) findViewById(R.id.btn1);
+        mText1 = (TextView) findViewById(R.id.text1);
         mBtn2 = (Button) findViewById(R.id.btn2);
         mBtn3 = (Button) findViewById(R.id.btn3);
 
-        mBtn1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getBaseContext(), "view=" + SimpleActivity.this.getHelper().getSize(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+        mText1.setText("ActivityStack_size=" +
+                ((SwipeBackApplication) getApplication()).getBackHelper().getSize());
 
         mBtn2.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -14,6 +14,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 
 /**
@@ -39,11 +41,17 @@ public class SwipeBackHelper {
 
     private boolean isSliding;
 
+    private boolean mSlidAnimLock;
+
     private int mWidth;
 
     private static final int DEFAULT_POINT_X = 40;
 
-    private static final int DEFAULT_DURATION = 150;
+    private static final int DEFAULT_CANCEL_DURATION = 200;
+
+    private static final int DEFAULT_FINISH_DURATION = 400;
+
+    private static final int DEFAULT_BACK_DURATION = 600;
 
     public SwipeBackHelper(Window window) {
         mWindows = window;
@@ -55,25 +63,27 @@ public class SwipeBackHelper {
      * 把Activity栈中的上一个Activity的ContentView拿出来添加到当前的Activity的ContentView中,并且Index=0
      * 即，在FrameLayout的最底层。
      */
-    public void addPreviousView() {
+    public boolean addPreviousView() {
         if (mCurrentContentView.getChildCount() == 0) {
             mCurrentActivity = null;
             mPreviousActivity = null;
+            return false;
         }
         SwipeBackApplication application = (SwipeBackApplication) mWindows.getContext().getApplicationContext();
         mPreviousActivity = application.getBackHelper().getPreActivty();
         if (mPreviousActivity == null) {
             mCurrentActivity = null;
             mPreviousActivity = null;
-            return;
+            return false;
         }
         ViewGroup previousContainer = getContentView(mPreviousActivity.getWindow());
         if (previousContainer == null || previousContainer.getChildCount() == 0) {
-            return;
+            return false;
         }
         mPreviousContentView = previousContainer.getChildAt(0);
         previousContainer.removeView(mPreviousContentView);
         mCurrentContentView.addView(mPreviousContentView, 0);
+        return true;
     }
 
     /**
@@ -128,7 +138,14 @@ public class SwipeBackHelper {
     }
 
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        /**
+         * 动画正在进行中
+         */
+        if (mSlidAnimLock) {
+            return true;
+        }
         int action = ev.getAction();
+        int actionIndex = ev.getActionIndex();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mLastX = ev.getRawX();
@@ -168,21 +185,28 @@ public class SwipeBackHelper {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                Log.i(TAG, "isSliding=" + isSliding);
-                if (isSliding) {
+                if (isSliding && actionIndex == 0) {
                     sliding(ev.getRawX());
+                } else if (isSliding && actionIndex != 0) {
+                    return true;
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                isSliding = false;
-                Log.i(TAG, "up_x=" + mLastX);
-                if (mDistanceX == 0) {
-                    removePreviousView();
-                } else if (mDistanceX > mWidth / 4) {
-                    toggleAnimator(true);
-                } else {
-                    toggleAnimator(false);
+            case MotionEvent.ACTION_POINTER_UP:
+            case MotionEvent.ACTION_OUTSIDE:
+                if (isSliding && actionIndex == 0) {
+                    isSliding = false;
+                    if (mDistanceX == 0) {
+                        if (mCurrentContentView.getChildCount() >= 2) {
+                            removePreviousView();
+                        }
+
+                    } else if (mDistanceX > mWidth / 4) {
+                        toggleAnimator(true, DEFAULT_CANCEL_DURATION);
+                    } else {
+                        toggleAnimator(false, DEFAULT_FINISH_DURATION);
+                    }
                 }
                 break;
         }
@@ -199,10 +223,14 @@ public class SwipeBackHelper {
      * @param x
      */
     private void sliding(float x) {
+        if (mPreviousContentView == null) {
+            return;
+        }
         View aboveView = getAboveView();
         View behindView = mPreviousContentView;
         float diffX = x - mLastX;
         mDistanceX = mDistanceX + diffX;
+        Log.i(TAG, "mDistanceX=" + mDistanceX);
         mLastX = x;
         if (mDistanceX < 0) {
             mDistanceX = 0;
@@ -228,13 +256,15 @@ public class SwipeBackHelper {
     /**
      * args为真，关闭Activity
      *
-     * @param args
+     * @param isFinish
      */
-    private void toggleAnimator(final boolean args) {
+    private void toggleAnimator(final boolean isFinish, final int duration) {
         final View aboveView = getAboveView();
         final View behindView = mPreviousContentView;
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(mDistanceX, args ? mWidth : 0);
-        valueAnimator.setDuration(DEFAULT_DURATION);
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(mDistanceX, isFinish ? mWidth : 0);
+        Interpolator interpolator = new DecelerateInterpolator(2f);
+        valueAnimator.setInterpolator(interpolator);
+        valueAnimator.setDuration(duration);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -248,7 +278,7 @@ public class SwipeBackHelper {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                if (args) {
+                if (isFinish) {
                     drawPreviousView();
                     removePreviousView();
                     if (getContext() instanceof Activity) {
@@ -264,11 +294,40 @@ public class SwipeBackHelper {
                         }
                     }
                 } else {
-
+                    mSlidAnimLock = false;
+                    isSliding = false;
+                    mDistanceX = 0;
+                    mPreviousContentView.setX(0);
+                    mPreviousContentView.setX(0);
+                    removePreviousView();
                 }
+
+            }
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                mSlidAnimLock = true;
             }
         });
         valueAnimator.start();
+    }
+
+    public void finshActivity() {
+        /**
+         * 添加PreActivity的ContentView
+         */
+        addPreviousView();
+        /**
+         * 添加背景
+         */
+        if (mCurrentContentView.getChildCount() >= 2) {
+            View aboveView = getAboveView();
+            if (aboveView.getBackground() == null) {
+                aboveView.setBackgroundColor(getWindowBackgroundColor());
+            }
+        }
+        toggleAnimator(true, DEFAULT_BACK_DURATION);
     }
 
     class DrawView extends View {
