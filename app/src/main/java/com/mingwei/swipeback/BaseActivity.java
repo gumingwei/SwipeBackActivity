@@ -2,6 +2,7 @@ package com.mingwei.swipeback;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MotionEvent;
 
 /**
  * Created by mingwei on 12/23/16.
@@ -22,7 +23,12 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        mBackHelper.removePreviousView();
+        //mBackHelper.removePreviousView();
         super.onStop();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        return mBackHelper.dispatchTouchEvent(ev) || super.dispatchTouchEvent(ev);
     }
 }

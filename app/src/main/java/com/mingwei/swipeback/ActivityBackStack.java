@@ -55,7 +55,7 @@ public class ActivityBackStack implements Application.ActivityLifecycleCallbacks
     }
 
     /**
-     * 获取站定的Activity
+     * 获取栈顶的Activity
      *
      * @return
      */
@@ -63,6 +63,11 @@ public class ActivityBackStack implements Application.ActivityLifecycleCallbacks
         return mActivityStack.lastElement();
     }
 
+    /**
+     * 获取倒数第二个Activity
+     *
+     * @return
+     */
     public Activity getPreActivty() {
         int size = mActivityStack.size();
         if (size < 2) {
