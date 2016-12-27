@@ -313,6 +313,27 @@ public class SwipeBackHelper {
         valueAnimator.start();
     }
 
+    public void startActivity() {
+        /**
+         * 添加PreActivity的ContentView
+         */
+        addPreviousView();
+        /**
+         * 添加背景
+         */
+        if (mCurrentContentView.getChildCount() >= 2) {
+            View aboveView = getAboveView();
+            if (aboveView.getBackground() == null) {
+                aboveView.setBackgroundColor(getWindowBackgroundColor());
+            }
+        }
+        mDistanceX = mWidth;
+        toggleAnimator(false, DEFAULT_BACK_DURATION);
+    }
+
+    /**
+     * 结束动画
+     */
     public void finshActivity() {
         /**
          * 添加PreActivity的ContentView
